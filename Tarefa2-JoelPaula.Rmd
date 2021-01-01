@@ -1,0 +1,93 @@
+---
+title: "Ficha 1 - Trabalho 2"
+author: "Joel Paula | aluno 93392"
+fontfamily: cantarell
+output:
+  pdf_document: 
+    toc: yes
+  html_document:
+    toc: yes
+    theme: spacelab
+    highlight: tango
+editor_options:
+  chunk_output_type: console
+---
+
+```{r warning=TRUE, include=FALSE}
+library("prob")
+library("knitr")
+```
+
+A procura diária (espontânea, fora encomendas) de um bolo de aniversário numa pastelaria é uma variável aleatória com a função de probabilidade:
+$$ f(x) = \frac{1}{6}\times\frac{2^x}{x!},\;\; x=1, 2, 3, 4 $$
+
+# 1. Usando *probspace* que permite criar um dataframe que representa o espaço de resultados, juntamente com as respetivas probabilidades de ocorrência, defina esse espaço.
+```{r}
+f <- function(x){
+  1/6*2^x/factorial(x)
+}
+
+space <- probspace(c(1,2,3,4),f(c(1,2,3,4)))
+kable(space, format = "pipe")
+```
+
+# 2. Obtenha o gráfico da função de probabilidade, f(x) 
+```{r}
+plot(space$x, space$probs, type="h", xlab="x", ylab="frequência relativa f(x)", 
+     main="função de probabilidade, f(x)")
+points(space$x, space$probs, pch=16, col="orange")
+```
+
+# 3. Obtenha o gráfico da função de distribuição, F(x)
+```{r}
+plot.ecdf(space$x, main="Função Distribuição F(X)",xlab="x",ylab="F(x)", 
+          pch=16, col.points="orange")
+
+```
+
+# 4. Especifique a Função de Distribuição
+```{r}
+acum=c(0,cumsum(space$probs))
+#Definir a função, com intervalos fechados à esquerda`
+F_x=stepfun(space$x, acum, right=FALSE)
+plot.stepfun(F_x, verticals=FALSE, main="Função Distribuição F(X)",xlab="x",
+             ylab="F(x)", pch=16, col.points="orange")
+```
+
+# 5. Qual a procura esperada? Com que variância? E desvio-padrão?
+```{r, results='asis'}
+# Procura esperada = E(X)
+E_x = sum(space$x*space$probs)
+paste("Procura Esperada = $E(X) =", E_x, "$")
+
+Var_X = sum(space$x^2*space$probs)-sum(space$x*space$probs)^2
+paste("Variância = $Var(X) =", Var_X, "$")
+
+paste("Desvio Padrão = ", sqrt(Var_X))
+
+```
+
+# 6. Cada bolo é vendido com um lucro de 5um. A pastelaria produz 3 destes bolos diariamente. Os bolos produzidos e não vendidos num dia são doados à REFOOD provocando um prejuízo de 3 u.m. por cada unidade não vendida. Qual o lucro diário esperado? Obtenha este valor
+## 6.1 teoricamente
+
+```{r}
+# Procura esperada = E(X)
+paste("Procura Esperada = E(X) =", round(E_x, 2))
+f_L <- function(x){x*5-(3-x)*3}
+Lucro_E = f_L(E_x)
+paste("Lucro Esperado =", round(Lucro_E, 2), "um")
+```
+
+## 6.2 experimentalmente, simulando 1000 observações da procura
+
+```{r}
+# 1000 amostras, usando a probabilidade dada
+x <- sample(space$x, 1000, replace=T, prob=space$probs)
+# mostrar o histograma
+hist(x,freq = F,xlab = 'x', density = 30, breaks=rep(1:4,each=2)+c(-.05,.05))
+# calculo da média da procura
+paste("Média de procura = ", mean(x))
+# cálculo do lucro médio
+paste("média de lucro =", mean(f_L(x)))
+```
+
